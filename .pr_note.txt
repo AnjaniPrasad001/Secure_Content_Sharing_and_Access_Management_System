@@ -1,0 +1,1 @@
+PR: remove debug panel & add JWT logging
