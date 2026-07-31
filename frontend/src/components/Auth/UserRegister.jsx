@@ -98,14 +98,17 @@ const UserRegister = () => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Phone Number</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Phone Number *</label>
             <input
               type="tel"
               name="phoneNumber"
+              placeholder="+919876543210"
               value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
             />
+            <p className="text-gray-500 text-xs mt-1">Format: +919876543210 or +1-234-567-8900</p>
           </div>
 
           <button

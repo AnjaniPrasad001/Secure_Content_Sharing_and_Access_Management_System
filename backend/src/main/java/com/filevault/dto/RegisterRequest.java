@@ -25,7 +25,9 @@ public class RegisterRequest {
     @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
     
-    @Pattern(regexp = "^[+]?[0-9]{10,15}$|^$", message = "Phone number must be valid")
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[+]?[0-9]{1,3}[-\\s]?[0-9]{1,4}[-\\s]?[0-9]{1,4}[-\\s]?[0-9]{1,9}$", 
+             message = "Phone number must be valid (e.g., +919876543210 or +1-234-567-8900)")
     private String phoneNumber;
     
     private String role; // ADMIN or USER

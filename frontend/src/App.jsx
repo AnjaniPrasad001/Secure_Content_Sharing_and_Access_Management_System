@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
 
 // Auth Provider
@@ -16,15 +16,32 @@ import UserDashboard from './components/User/UserDashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 
+// Small dev-only log to force and confirm hot-reload when this file changes
+// (will be removed later if undesired)
+// eslint-disable-next-line no-console
+console.debug('[DEV] App.jsx module loaded');
+
 function AppRoutes() {
   const { isAuthenticated, userRole, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Global handler for unauthorized events emitted by API layer
+  // NOTE: Hooks must be called unconditionally at the top level of the component.
+  React.useEffect(() => {
+    const handler = (e) => {
+      console.warn('Unauthorized event received from API', e.detail);
+      navigate('/unauthorized');
+    };
+
+    window.addEventListener('app:unauthorized', handler);
+    return () => window.removeEventListener('app:unauthorized', handler);
+  }, [navigate]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
-    <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
@@ -61,14 +78,15 @@ function AppRoutes() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </Router>
   );
 }
 
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <Router>
+        <AppRoutes />
+      </Router>
     </AuthProvider>
   );
 }

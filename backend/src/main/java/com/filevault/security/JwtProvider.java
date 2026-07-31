@@ -2,12 +2,15 @@ package com.filevault.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+
 import javax.crypto.SecretKey;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JwtProvider {
     
@@ -48,12 +51,18 @@ public class JwtProvider {
     
     public String getUsernameFromToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return claims.getSubject();
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getSubject();
+        } catch (Exception e) {
+            String preview = token != null ? (token.length() > 16 ? token.substring(0, 8) + "..." + token.substring(token.length() - 8) : token) : "<null>";
+            log.error("Failed to parse username from token (preview={}): {}", preview, e.getMessage());
+            throw e;
+        }
     }
     
     public boolean validateToken(String token) {
@@ -65,12 +74,20 @@ public class JwtProvider {
                     .parseSignedClaims(token);
             return true;
         } catch (MalformedJwtException e) {
+            String preview = token != null ? (token.length() > 16 ? token.substring(0, 8) + "..." + token.substring(token.length() - 8) : token) : "<null>";
+            log.error("Invalid JWT token (preview={}): {}", preview, e.getMessage());
             throw new RuntimeException("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
+            String preview = token != null ? (token.length() > 16 ? token.substring(0, 8) + "..." + token.substring(token.length() - 8) : token) : "<null>";
+            log.error("Expired JWT token (preview={}): {}", preview, e.getMessage());
             throw new RuntimeException("Expired JWT token: " + e.getMessage());
         } catch (UnsupportedJwtException e) {
+            String preview = token != null ? (token.length() > 16 ? token.substring(0, 8) + "..." + token.substring(token.length() - 8) : token) : "<null>";
+            log.error("Unsupported JWT token (preview={}): {}", preview, e.getMessage());
             throw new RuntimeException("Unsupported JWT token: " + e.getMessage());
         } catch (IllegalArgumentException e) {
+            String preview = token != null ? (token.length() > 16 ? token.substring(0, 8) + "..." + token.substring(token.length() - 8) : token) : "<null>";
+            log.error("JWT claims string empty (preview={}): {}", preview, e.getMessage());
             throw new RuntimeException("JWT claims string is empty: " + e.getMessage());
         }
     }

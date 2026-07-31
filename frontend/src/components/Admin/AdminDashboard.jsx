@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import PhoneNumberManager from '../PhoneNumberManager';
 import api from '../../api/axiosConfig';
 import FileUpload from '../FileUpload';
 import RequestManagement from '../RequestManagement';
 import FileEditor from '../FileEditor';
+import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
   const [admin, setAdmin] = useState(null);
+  const [adminData, setAdminData] = useState(null);
   const [files, setFiles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [dashboard, setDashboard] = useState({});
@@ -17,13 +20,19 @@ const AdminDashboard = () => {
   const [deletingFileId, setDeletingFileId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [showPhoneWarning, setShowPhoneWarning] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, phoneNumberWarning, clearPhoneNumberWarning } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
     fetchCategories();
-  }, []);
+    
+    // Check for phone number warning
+    if (phoneNumberWarning) {
+      setShowPhoneWarning(true);
+    }
+  }, [phoneNumberWarning]);
 
   const fetchCategories = async () => {
     try {
@@ -49,25 +58,36 @@ const AdminDashboard = () => {
       }
       
       setAdmin(adminId);
+      setAdminData(userData);
 
       console.log('Fetching dashboard for admin:', adminId);
       
-      const [dashRes, filesRes] = await Promise.all([
+      const [dashRes, filesRes, adminRes] = await Promise.all([
         api.get(`/admin/${adminId}/dashboard`),
         api.get(`/admin/${adminId}/files`),
+        api.get(`/admin/profile/${adminId}`),
       ]);
 
       console.log('Dashboard response:', dashRes.data);
       console.log('Files response:', filesRes.data);
+      console.log('Admin response:', adminRes.data);
       
       setDashboard(dashRes.data);
       setFiles(filesRes.data);
+      setAdminData(adminRes.data);
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
       console.error('Error details:', error.response?.data || error.message);
       setLoading(false);
     }
+  };
+
+  const handlePhoneNumberUpdate = (newPhone) => {
+    setAdminData({ ...adminData, phoneNumber: newPhone });
+    setShowPhoneWarning(false);
+    clearPhoneNumberWarning();
+    toast.success('Phone number updated successfully!');
   };
 
   const handleLogout = () => {
@@ -100,6 +120,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Debug panel removed: left intentionally blank for production */}
       {/* Navbar */}
       <nav className="bg-blue-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -114,6 +135,38 @@ const AdminDashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Phone Number Warning */}
+        {showPhoneWarning && !adminData?.phoneNumber && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <p className="text-yellow-800 font-semibold">⚠️ No Phone Number on File</p>
+                <p className="text-yellow-700 text-sm mt-1">
+                  Please add your phone number to enable OTP-based password recovery and account security features.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPhoneWarning(false)}
+                className="text-yellow-400 hover:text-yellow-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Phone Number Manager */}
+        {adminData && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <PhoneNumberManager
+              userId={adminData.id}
+              userRole="ADMIN"
+              currentPhoneNumber={adminData.phoneNumber}
+              onPhoneNumberUpdate={handlePhoneNumberUpdate}
+            />
+          </div>
+        )}
+
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">

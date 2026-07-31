@@ -7,6 +7,7 @@ import com.filevault.exception.ResourceNotFoundException;
 import com.filevault.repository.AdminRepository;
 import com.filevault.repository.FileRepository;
 import com.filevault.repository.PaymentRepository;
+import com.filevault.util.PhoneNumberValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,9 +45,48 @@ public class AdminService {
     
     public Admin updateAdminProfile(Long adminId, String firstName, String lastName, String phoneNumber) {
         Admin admin = getAdminById(adminId);
-        if (firstName != null) admin.setFirstName(firstName);
-        if (lastName != null) admin.setLastName(lastName);
-        if (phoneNumber != null) admin.setPhoneNumber(phoneNumber);
+        
+        // Update name fields
+        if (firstName != null && !firstName.isEmpty()) {
+            admin.setFirstName(firstName);
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            admin.setLastName(lastName);
+        }
+        
+        // Validate and update phone number if provided
+        if (phoneNumber != null && !phoneNumber.isEmpty()) {
+            PhoneNumberValidator.validateOrThrow(phoneNumber);
+            
+            // Check if new phone number is already in use by another admin
+            if (adminRepository.existsByPhoneNumber(phoneNumber)) {
+                Admin existingAdmin = adminRepository.findByPhoneNumber(phoneNumber).get();
+                if (!existingAdmin.getId().equals(adminId)) {
+                    throw new RuntimeException("Phone number is already registered by another admin");
+                }
+            }
+            
+            admin.setPhoneNumber(phoneNumber);
+        }
+        
+        return adminRepository.save(admin);
+    }
+    
+    public Admin updateAdminPhoneNumber(Long adminId, String phoneNumber) {
+        Admin admin = getAdminById(adminId);
+        
+        // Validate phone number
+        PhoneNumberValidator.validateOrThrow(phoneNumber);
+        
+        // Check if phone number is already in use by another admin
+        if (adminRepository.existsByPhoneNumber(phoneNumber)) {
+            Admin existingAdmin = adminRepository.findByPhoneNumber(phoneNumber).get();
+            if (!existingAdmin.getId().equals(adminId)) {
+                throw new RuntimeException("Phone number is already registered");
+            }
+        }
+        
+        admin.setPhoneNumber(phoneNumber);
         return adminRepository.save(admin);
     }
     

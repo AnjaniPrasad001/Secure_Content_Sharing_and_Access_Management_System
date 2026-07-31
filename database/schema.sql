@@ -10,12 +10,13 @@ CREATE TABLE admins (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(20),
+    phone_number VARCHAR(20) UNIQUE NULL,
     profile_picture VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    INDEX idx_email (email),
+    INDEX idx_phone_number (phone_number)
 );
 
 -- Users Table
@@ -25,13 +26,14 @@ CREATE TABLE users (
     password VARCHAR(255),
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(20),
+    phone_number VARCHAR(20) UNIQUE NULL,
     profile_picture VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     wallet_balance DOUBLE DEFAULT 0.0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    INDEX idx_email (email),
+    INDEX idx_phone_number (phone_number)
 );
 
 -- Categories Table

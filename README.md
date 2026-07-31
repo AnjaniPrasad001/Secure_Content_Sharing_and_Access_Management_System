@@ -23,7 +23,7 @@
 
 ### Backend
 - **Framework**: Spring Boot 3.1.5
-- **Java Version**: 17
+- **Java Version**: 17 or higher (tested with Java 17 and Java 23)
 - **Build Tool**: Maven
 - **Database**: MySQL 8.0+
 - **Security**: Spring Security + JWT (jjwt 0.12.3)
@@ -37,7 +37,9 @@
 
 ### Storage
 - **Type**: Local Filesystem
-- **Location**: Configurable (default: `D:/filevault-uploads`)
+- **Location**: Configurable via `file.upload-dir` in `backend/src/main/resources/application.properties`.
+  - Default (when not overridden) is the `uploads` folder inside the `backend` directory (e.g. `backend/uploads`).
+  - You can set an absolute path using environment variables if needed.
 
 ---
 
@@ -144,16 +146,16 @@ cd backend
 
 2. **Update application.properties**
 ```properties
-# database/src/main/resources/application.properties
+# backend/src/main/resources/application.properties
 spring.datasource.url=jdbc:mysql://localhost:3306/filevault_db
 spring.datasource.username=root
 spring.datasource.password=your_password
 
 # Update JWT secret (minimum 32 characters)
-jwt.secret=your-very-long-secret-key-with-minimum-32-characters
+jwt.secret=your-very-long-secret-key-change-this-in-production
 
-# Configure file upload directory
-file.upload-dir=D:/filevault-uploads
+# Configure file upload directory (default: uploads inside backend)
+file.upload-dir=uploads
 ```
 
 3. **Install Dependencies**
@@ -172,6 +174,23 @@ mvn spring-boot:run
 ```
 
 The backend will start on `http://localhost:8080`
+If you run locally with the frontend dev server, the frontend uses port `3000` by default and proxies API requests to `http://localhost:8080`.
+
+Quick admin registration & login (useful for local testing):
+
+PowerShell example:
+
+```powershell
+# Register an admin
+Invoke-RestMethod -Uri http://localhost:8080/api/auth/admin/register -Method Post -ContentType 'application/json' -Body '{"email":"admin@example.com","password":"Password123!","firstName":"Admin","lastName":"User","phoneNumber":"1234567890"}'
+
+# Login as admin
+(Invoke-RestMethod -Uri http://localhost:8080/api/auth/admin/login -Method Post -ContentType 'application/json' -Body '{"email":"admin@example.com","password":"Password123!"}')
+```
+
+Notes:
+- Ensure `jwt.secret` is set to a secure random string in production (minimum 32 characters).
+- The application reads configuration from environment variables when present; see `application.properties` for defaults.
 
 ---
 

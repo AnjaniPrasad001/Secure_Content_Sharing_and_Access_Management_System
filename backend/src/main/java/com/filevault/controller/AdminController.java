@@ -2,6 +2,7 @@ package com.filevault.controller;
 
 import com.filevault.dto.AccessGrantRequest;
 import com.filevault.dto.FileResponse;
+import com.filevault.dto.PhoneNumberRequest;
 import com.filevault.entity.AccessControl;
 import com.filevault.entity.Admin;
 import com.filevault.service.AccessControlService;
@@ -46,6 +47,21 @@ public class AdminController {
             return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
         }
     }
+
+    // Backwards-compatible alias: allow GET /api/admin/{adminId} to return profile
+    @GetMapping("/{adminId}")
+    public ResponseEntity<?> getAdminProfileAlias(@PathVariable Long adminId) {
+        try {
+            Admin admin = adminService.getAdminById(adminId);
+            return new ResponseEntity<>(admin, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Get admin profile (alias) error: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Admin not found");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        }
+    }
     
     @PutMapping("/profile/{adminId}")
     public ResponseEntity<?> updateAdminProfile(
@@ -64,6 +80,32 @@ public class AdminController {
             log.error("Update admin profile error: {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to update profile");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @PutMapping("/phone-number/{adminId}")
+    public ResponseEntity<?> updateAdminPhoneNumber(
+            @PathVariable Long adminId,
+            @RequestBody PhoneNumberRequest phoneNumberRequest) {
+        
+        try {
+            Admin updatedAdmin = adminService.updateAdminPhoneNumber(adminId, phoneNumberRequest.getPhoneNumber());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Phone number updated successfully");
+            response.put("admin", updatedAdmin);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid phone number: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Invalid phone number format");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("Update admin phone number error: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to update phone number");
             error.put("message", e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
         }
@@ -208,6 +250,29 @@ public class AdminController {
             log.error("Debug files error: {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", "Debug operation failed");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/{adminId}/debug/auth")
+    public ResponseEntity<?> debugAuth(@PathVariable Long adminId) {
+        try {
+            Map<String, Object> info = new HashMap<>();
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null) {
+                info.put("authenticated", false);
+            } else {
+                info.put("authenticated", auth.isAuthenticated());
+                info.put("principal", auth.getPrincipal());
+                info.put("name", auth.getName());
+                info.put("authorities", auth.getAuthorities());
+            }
+            return new ResponseEntity<>(info, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Debug auth error: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Debug auth failed");
             error.put("message", e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
         }

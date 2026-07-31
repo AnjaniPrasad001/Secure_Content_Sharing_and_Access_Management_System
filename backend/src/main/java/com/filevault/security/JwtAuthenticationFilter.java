@@ -32,23 +32,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         try {
             String jwt = getJwtFromRequest(request);
-            
-            if (StringUtils.hasText(jwt) && jwtProvider.validateToken(jwt)) {
-                String username = jwtProvider.getUsernameFromToken(jwt);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                
-                UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails, 
-                                null, 
-                                userDetails.getAuthorities()
-                        );
-                
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            if (!StringUtils.hasText(request.getHeader("Authorization"))) {
+                logger.debug("No Authorization header present for request " + request.getMethod() + " " + request.getRequestURI());
+            } else {
+                String bearer = request.getHeader("Authorization");
+                String tokenOnly = bearer != null && bearer.startsWith("Bearer ") ? bearer.substring(7) : bearer;
+                String preview = tokenOnly != null ? (tokenOnly.length() > 16 ? tokenOnly.substring(0, 8) + "..." + tokenOnly.substring(tokenOnly.length() - 8) : tokenOnly) : "<null>";
+                logger.debug("Authorization header present (preview=" + preview + ") for request " + request.getMethod() + " " + request.getRequestURI());
+            }
+
+            if (StringUtils.hasText(jwt)) {
+                String tokenPreview = jwt.length() > 16 ? jwt.substring(0, 8) + "..." + jwt.substring(jwt.length() - 8) : jwt;
+                try {
+                    if (jwtProvider.validateToken(jwt)) {
+                        String username = jwtProvider.getUsernameFromToken(jwt);
+                        logger.debug("Validated JWT (preview=" + tokenPreview + ") - username=" + username + " for request " + request.getMethod() + " " + request.getRequestURI());
+
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.debug("Authentication set for user=" + username + " authorities=" + userDetails.getAuthorities() + " remote=" + request.getRemoteAddr());
+                    } else {
+                        logger.debug("JWT validation returned false (preview=" + tokenPreview + ") for request " + request.getMethod() + " " + request.getRequestURI());
+                    }
+                } catch (Exception ex) {
+                    logger.warn("JWT processing failed (preview=" + tokenPreview + ") for request " + request.getMethod() + " " + request.getRequestURI() + " remote=" + request.getRemoteAddr() + ": " + ex.getMessage(), ex);
+                    logger.debug("JWT processing stacktrace", ex);
+                }
             }
         } catch (Exception e) {
-            logger.error("Could not set user authentication", e);
+            String bearer = request.getHeader("Authorization");
+            String tokenOnly = bearer != null && bearer.startsWith("Bearer ") ? bearer.substring(7) : bearer;
+            String preview = tokenOnly != null ? (tokenOnly.length() > 16 ? tokenOnly.substring(0, 8) + "..." + tokenOnly.substring(tokenOnly.length() - 8) : tokenOnly) : "<null>";
+            logger.error("Could not set user authentication (tokenPreview=" + preview + ", path=" + request.getRequestURI() + ", remote=" + request.getRemoteAddr() + ")", e);
         }
         
         filterChain.doFilter(request, response);

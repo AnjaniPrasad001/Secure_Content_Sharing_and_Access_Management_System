@@ -27,7 +27,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Admin login error: {}", e.getMessage());
             return new ResponseEntity<>(
-                    new JwtResponse(null, "Bearer", null, null, null, null, "ADMIN", e.getMessage()),
+                    new JwtResponse(null, "Bearer", null, null, null, null, null, "ADMIN", e.getMessage(), null),
                     HttpStatus.UNAUTHORIZED
             );
         }
@@ -41,7 +41,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Admin registration error: {}", e.getMessage());
             return new ResponseEntity<>(
-                    new JwtResponse(null, "Bearer", null, null, null, null, "ADMIN", e.getMessage()),
+                    new JwtResponse(null, "Bearer", null, null, null, null, null, "ADMIN", e.getMessage(), null),
                     HttpStatus.BAD_REQUEST
             );
         }
@@ -55,7 +55,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("User login error: {}", e.getMessage());
             return new ResponseEntity<>(
-                    new JwtResponse(null, "Bearer", null, null, null, null, "USER", e.getMessage()),
+                    new JwtResponse(null, "Bearer", null, null, null, null, null, "USER", e.getMessage(), null),
                     HttpStatus.UNAUTHORIZED
             );
         }
@@ -69,7 +69,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("User registration error: {}", e.getMessage());
             return new ResponseEntity<>(
-                    new JwtResponse(null, "Bearer", null, null, null, null, "USER", e.getMessage()),
+                    new JwtResponse(null, "Bearer", null, null, null, null, null, "USER", e.getMessage(), null),
                     HttpStatus.BAD_REQUEST
             );
         }

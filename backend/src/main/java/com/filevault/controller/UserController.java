@@ -2,6 +2,7 @@ package com.filevault.controller;
 
 import com.filevault.dto.FileResponse;
 import com.filevault.dto.PaymentRequest;
+import com.filevault.dto.PhoneNumberRequest;
 import com.filevault.entity.Payment;
 import com.filevault.entity.User;
 import com.filevault.service.AccessControlService;
@@ -66,6 +67,32 @@ public class UserController {
             log.error("Update user profile error: {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to update profile");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @PutMapping("/phone-number/{userId}")
+    public ResponseEntity<?> updateUserPhoneNumber(
+            @PathVariable Long userId,
+            @RequestBody PhoneNumberRequest phoneNumberRequest) {
+        
+        try {
+            User updatedUser = userService.updateUserPhoneNumber(userId, phoneNumberRequest.getPhoneNumber());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Phone number updated successfully");
+            response.put("user", updatedUser);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid phone number: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Invalid phone number format");
+            error.put("message", e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("Update user phone number error: {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to update phone number");
             error.put("message", e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
         }

@@ -28,7 +28,7 @@ public class Admin {
     @Column(nullable = false)
     private String lastName;
     
-    @Column(nullable = true)
+    @Column(unique = true, nullable = true)
     private String phoneNumber;
     
     @Column(nullable = true)

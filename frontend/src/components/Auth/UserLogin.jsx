@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ForgotPasswordOTP from './ForgotPasswordOTP';
 import api from '../../api/axiosConfig';
 
 const UserLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -22,14 +24,26 @@ const UserLogin = () => {
 
     try {
       const response = await api.post('/auth/user/login', formData);
-      login(response.data);
-      navigate('/user/dashboard');
+      if (response.data?.token) {
+        login(response.data);
+        navigate('/user/dashboard');
+      } else {
+        setError(response.data?.message || 'Login failed: no token returned');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-500 to-teal-600">
+        <ForgotPasswordOTP onBackClick={() => setShowForgotPassword(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-500 to-teal-600">
@@ -76,9 +90,19 @@ const UserLogin = () => {
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-4">
-          Don't have an account? <Link to="/user/register" className="text-green-600 hover:underline">Register</Link>
-        </p>
+        <div className="text-center text-gray-600 mt-4 space-y-2">
+          <p>
+            Don't have an account? <Link to="/user/register" className="text-green-600 hover:underline">Register</Link>
+          </p>
+          <p>
+            <button
+              onClick={() => setShowForgotPassword(true)}
+              className="text-green-600 hover:underline font-medium"
+            >
+              Forgot Password?
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

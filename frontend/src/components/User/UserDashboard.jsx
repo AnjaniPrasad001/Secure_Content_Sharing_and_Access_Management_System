@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import PhoneNumberManager from '../PhoneNumberManager';
 import api from '../../api/axiosConfig';
 import AccessRequest from '../AccessRequest';
 import FileViewer from '../FileViewer/FileViewer';
+import toast from 'react-hot-toast';
 
 const UserDashboard = () => {
   const [user, setUser] = useState(null);
@@ -12,12 +14,18 @@ const UserDashboard = () => {
   const [selectedFileId, setSelectedFileId] = useState(null);
   const [selectedFileDetails, setSelectedFileDetails] = useState(null);
   const [selectedFileForReading, setSelectedFileForReading] = useState(null);
+  const [showPhoneWarning, setShowPhoneWarning] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, phoneNumberWarning, clearPhoneNumberWarning } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+    
+    // Check for phone number warning
+    if (phoneNumberWarning) {
+      setShowPhoneWarning(true);
+    }
+  }, [phoneNumberWarning]);
 
   const fetchDashboardData = async () => {
     try {
@@ -39,6 +47,13 @@ const UserDashboard = () => {
       console.error('Error response:', error.response?.data);
       setLoading(false);
     }
+  };
+
+  const handlePhoneNumberUpdate = (newPhone) => {
+    setUser({ ...user, phoneNumber: newPhone });
+    setShowPhoneWarning(false);
+    clearPhoneNumberWarning();
+    toast.success('Phone number updated successfully!');
   };
 
   const handleLogout = () => {
@@ -88,6 +103,38 @@ const UserDashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Phone Number Warning */}
+        {showPhoneWarning && !user?.phoneNumber && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <p className="text-yellow-800 font-semibold">⚠️ No Phone Number on File</p>
+                <p className="text-yellow-700 text-sm mt-1">
+                  Please add your phone number to enable OTP-based password recovery and account security features.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPhoneWarning(false)}
+                className="text-yellow-400 hover:text-yellow-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Phone Number Manager */}
+        {user && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <PhoneNumberManager
+              userId={user.id}
+              userRole="USER"
+              currentPhoneNumber={user.phoneNumber}
+              onPhoneNumberUpdate={handlePhoneNumberUpdate}
+            />
+          </div>
+        )}
+
         {/* User Info */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex justify-between items-center">
