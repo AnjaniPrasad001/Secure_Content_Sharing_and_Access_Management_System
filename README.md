@@ -483,3 +483,5 @@ For support, email support@filevault.com or create an issue on GitHub.
 - Configure environment-specific properties
 - Monitor file storage usage
 - Implement logging and monitoring
+
+- PR: remove debug panel & add JWT logging
