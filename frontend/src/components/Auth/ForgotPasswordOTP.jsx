@@ -26,7 +26,7 @@ const ForgotPasswordOTP = ({ onBackClick }) => {
 
       setMaskedPhone(response.data.phoneNumber);
       setStep(2);
-      toast.success('OTP sent to your phone number');
+      toast.success('OTP generated successfully');
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to request OTP';
       setError(errorMessage);
@@ -142,7 +142,7 @@ const ForgotPasswordOTP = ({ onBackClick }) => {
               disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 rounded-lg font-medium transition"
             >
-              {isLoading ? 'Sending OTP...' : 'Request OTP'}
+              {isLoading ? 'Generating OTP...' : 'Request OTP'}
             </button>
 
             <button
@@ -161,7 +161,7 @@ const ForgotPasswordOTP = ({ onBackClick }) => {
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <p className="text-blue-700 text-sm">
-                OTP sent to {maskedPhone}. Valid for 5 minutes.
+                OTP generated for {maskedPhone}. Valid for 5 minutes.
               </p>
             </div>
 

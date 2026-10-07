@@ -41,8 +41,11 @@ public class FileService {
     
     @Autowired
     private AccessControlRepository accessControlRepository;
-    
-    @Value("${file.upload-dir:D:/filevault-uploads}")
+
+    @Autowired(required = false)
+    private com.filevault.service.rag.VectorStoreService vectorStoreService;
+
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
     
     @PostConstruct
@@ -96,6 +99,9 @@ public class FileService {
                 .build();
         
         File savedFile = fileRepository.save(fileEntity);
+        if (vectorStoreService != null) {
+            try { vectorStoreService.indexFile(savedFile); } catch (Exception ignored) {}
+        }
         log.info("File entity saved with ID: {} and path: {}", savedFile.getId(), savedFile.getFilePath());
         return savedFile;
     }
@@ -151,6 +157,9 @@ public class FileService {
                 .build();
         
         File savedFile = fileRepository.save(fileEntity);
+        if (vectorStoreService != null) {
+            try { vectorStoreService.indexFile(savedFile); } catch (Exception ignored) {}
+        }
         log.info("File entity saved with ID: {} and path: {}", savedFile.getId(), savedFile.getFilePath());
         return savedFile;
     }
@@ -230,6 +239,9 @@ public class FileService {
         
         // Delete from database
         fileRepository.delete(file);
+        if (vectorStoreService != null) {
+            try { vectorStoreService.removeFileIndex(fileId); } catch (Exception ignored) {}
+        }
         return file;
     }
     
@@ -328,9 +340,13 @@ public class FileService {
         return allFiles;
     }
 
-    public File updateFile(Long fileId, Map<String, Object> updates) {
+    public File updateFile(Long fileId, Long adminId, Map<String, Object> updates) {
         File file = fileRepository.findById(fileId)
                 .orElseThrow(() -> new ResourceNotFoundException("File not found"));
+
+        if (adminId != null && !file.getAdmin().getId().equals(adminId)) {
+            throw new UnauthorizedAccessException("You don't have permission to update this file");
+        }
 
         // Update description
         if (updates.containsKey("description")) {
@@ -370,6 +386,10 @@ public class FileService {
         }
 
         file.setUpdatedAt(LocalDateTime.now());
-        return fileRepository.save(file);
+        File updatedFile = fileRepository.save(file);
+        if (vectorStoreService != null) {
+            try { vectorStoreService.indexFile(updatedFile); } catch (Exception ignored) {}
+        }
+        return updatedFile;
     }
 }

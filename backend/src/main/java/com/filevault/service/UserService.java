@@ -88,22 +88,24 @@ public class UserService {
     
     public User addWalletBalance(Long userId, Double amount) {
         User user = getUserById(userId);
-        user.setWalletBalance(user.getWalletBalance() + amount);
+        double currentBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+        user.setWalletBalance(currentBalance + amount);
         return userRepository.save(user);
     }
     
     public User deductWalletBalance(Long userId, Double amount) {
         User user = getUserById(userId);
-        if (user.getWalletBalance() < amount) {
+        double currentBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+        if (currentBalance < amount) {
             throw new RuntimeException("Insufficient wallet balance");
         }
-        user.setWalletBalance(user.getWalletBalance() - amount);
+        user.setWalletBalance(currentBalance - amount);
         return userRepository.save(user);
     }
     
     public Double getWalletBalance(Long userId) {
         User user = getUserById(userId);
-        return user.getWalletBalance();
+        return user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
     }
     
     public void deactivateUser(Long userId) {

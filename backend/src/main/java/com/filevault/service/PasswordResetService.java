@@ -31,9 +31,6 @@ public class PasswordResetService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
-    @Autowired
-    private TwilioService twilioService;
-    
     // In-memory OTP storage (phone -> OTP)
     // In production, use Redis or database with expiration
     private final Map<String, OtpEntry> otpStorage = new ConcurrentHashMap<>();
@@ -81,12 +78,9 @@ public class PasswordResetService {
         // Store OTP
         otpStorage.put(phoneNumber, new OtpEntry(otp));
         
-        // Send OTP via SMS (using TwilioService)
+        // Generate and log OTP for local development and verification
         try {
-            log.info("Sending OTP to phone number: {}", phoneNumber);
-            // twilioService.sendOtp(phoneNumber, otp); // Uncomment when Twilio is configured
-            
-            // For development/testing, log the OTP
+            log.info("Generating OTP for phone number: {}", phoneNumber);
             log.debug("OTP for phone {}: {}", phoneNumber, otp);
         } catch (Exception e) {
             log.error("Failed to send OTP: {}", e.getMessage());
@@ -94,7 +88,7 @@ public class PasswordResetService {
         }
         
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "OTP sent to your phone number. Valid for 5 minutes.");
+        response.put("message", "OTP generated successfully. Valid for 5 minutes.");
         response.put("phoneNumber", maskPhoneNumber(phoneNumber));
         
         return response;

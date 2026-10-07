@@ -212,9 +212,9 @@ All backend services are active and ready:
 
 ## Next Steps (Optional Enhancements)
 
-1. **SMS Integration**
-   - Uncomment Twilio service in PasswordResetService
-   - Replace console logging with actual SMS sending
+1. **Notification Integration**
+   - Replace console logging with a pluggable delivery provider if needed
+   - Keep OTP flow available for local development and testing
 
 2. **Redis Integration**
    - Replace in-memory OTP storage with Redis

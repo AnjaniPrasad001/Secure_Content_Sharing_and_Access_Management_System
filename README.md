@@ -1,487 +1,189 @@
-# FileVault - Secure Content Sharing and Access Management System
+# FileVault - Secure Content Sharing & AI Analytics Management System
 
 ## Project Overview
 
-**FileVault** is a comprehensive secure, role-based file sharing and access management platform that enables **admins** (content creators) to upload and manage files across multiple categories while **users** (viewers) can discover, purchase, and access content based on their permissions.
+**FileVault** is a comprehensive, secure, role-based file sharing, access management, and AI-powered analytics platform. It enables **admins** (content creators) to upload and manage files across categories while **users** (viewers) can discover, search, purchase, request, and access content based on their permissions.
 
-### Key Features
+FileVault features **two fully integrated LLM-powered chatbots**:
+1. **Public Content Discovery Assistant**: Integrated into the Discover Public Content page for natural-language content discovery, category search, recent upload filtering, recommendations, and Retrieval-Augmented Generation (RAG) over public documents.
+2. **Admin AI Analytics Assistant**: Integrated into the Admin Dashboard for secure, role-isolated analytics, real-time metrics, historical trend graphs (using Recharts), AI performance insights, and RAG document summaries over the admin's own uploaded content.
 
-- **Dual Dashboard System**: Separate authenticated dashboards for admins and users
-- **Flexible Access Control**: Public, Private, and Restricted file access types
-- **Monetized Content**: Users can purchase access to restricted files
-- **Manual Access Sharing**: Admins can grant/revoke access to users by ID
-- **Category Organization**: Content organized by Education, Story, and Genres
-- **Role-Based Security**: Unauthorized users prevented from accessing admin dashboards
-- **JWT Authentication**: Stateless token-based security
-- **Persistent Sessions**: File structures maintained across login/logout cycles
-- **Local File Storage**: Files stored on local filesystem with organized directory structure
-- **Payment Tracking**: Complete payment history and earnings tracking
+---
+
+## Key Features
+
+- **Dual LLM Chatbots**:
+  - **Public Discovery Chatbot**: Natural language search, recent upload filters, grounded RAG document QA, recommendation engine, structured clickable file cards.
+  - **Admin Analytics Chatbot**: Strict server-side `hasRole('ADMIN')` RBAC, time-series visualization (Recharts), category breakdown, month-over-month engagement comparison, AI performance suggestions, admin-scoped document RAG.
+- **RAG & In-Memory Vector Storage**: Document text extractor (`DocumentExtractorService`) supporting TXT, PDF, DOCX, MD, CSV, Code, and SQL. Chunking and term/embedding similarity search (`VectorStoreService`) auto-indexed on app start and upload/update/delete events.
+- **Dual Dashboard System**: Dedicated, role-authenticated dashboards for Admins and Users.
+- **Flexible Access Control**: Public, Private, and Restricted file access levels with server-enforced visibility rules.
+- **Monetized Content & Wallet**: Users can fund their wallet and purchase access to restricted files.
+- **Access Requests & Approval**: Users can request access to files; Admins can approve/reject with custom reasons.
+- **OTP Password Reset & Phone Recovery**: Phone number validation and OTP-based recovery.
+- **Role-Based Security**: Spring Security + JWT authentication enforcing strict role separation.
 
 ---
 
 ## Tech Stack
 
 ### Backend
-- **Framework**: Spring Boot 3.1.5
-- **Java Version**: 17 or higher (tested with Java 17 and Java 23)
+- **Framework**: Spring Boot 3.1.5 (Java 17+)
 - **Build Tool**: Maven
-- **Database**: MySQL 8.0+
-- **Security**: Spring Security + JWT (jjwt 0.12.3)
-- **ORM**: JPA/Hibernate
+- **Database**: H2 (embedded zero-config fallback) / MySQL 8.0+ / PostgreSQL
+- **Security**: Spring Security + JWT (`jjwt 0.12.3`) & BCrypt Password Encoding
+- **AI / LLM Integration**: Google Gemini API (`gemini-1.5-flash` / configurable model) with backend API key security and graceful DB/RAG fallback.
+- **Vector Search / RAG**: In-memory vector store with document chunking and metadata scoping.
 
 ### Frontend
-- **Framework**: React
-- **State Management**: Redux or Context API
-- **HTTP Client**: Axios
-- **Authentication**: JWT Token Storage
-
-### Storage
-- **Type**: Local Filesystem
-- **Location**: Configurable via `file.upload-dir` in `backend/src/main/resources/application.properties`.
-  - Default (when not overridden) is the `uploads` folder inside the `backend` directory (e.g. `backend/uploads`).
-  - You can set an absolute path using environment variables if needed.
+- **Framework**: React 18 with React Router v6
+- **Styling**: Vanilla CSS & Tailwind CSS
+- **Visualization**: Recharts (Line & Bar charts)
+- **Icons**: Lucide React
+- **HTTP Client**: Axios with JWT interceptors
+- **State & Notifications**: Context API & React Hot Toast
 
 ---
 
-## Project Structure
+## AI Architecture & Data Flow
 
 ```
-FileVault/
-├── backend/
-│   ├── pom.xml
-│   └── src/main/java/com/filevault/
-│       ├── FileVaultApplication.java
-│       ├── config/
-│       │   ├── SecurityConfig.java
-│       │   └── CorsConfig.java
-│       ├── controller/
-│       │   ├── AuthController.java
-│       │   ├── AdminController.java
-│       │   ├── UserController.java
-│       │   └── FileController.java
-│       ├── service/
-│       │   ├── AuthService.java
-│       │   ├── AdminService.java
-│       │   ├── UserService.java
-│       │   ├── FileService.java
-│       │   ├── AccessControlService.java
-│       │   └── PaymentService.java
-│       ├── entity/
-│       │   ├── Admin.java
-│       │   ├── User.java
-│       │   ├── File.java
-│       │   ├── Category.java
-│       │   ├── AccessControl.java
-│       │   ├── Payment.java
-│       │   └── Enums (FileAccessType, AccessType, PaymentStatus)
-│       ├── repository/
-│       │   ├── AdminRepository.java
-│       │   ├── UserRepository.java
-│       │   ├── FileRepository.java
-│       │   ├── CategoryRepository.java
-│       │   ├── AccessControlRepository.java
-│       │   └── PaymentRepository.java
-│       ├── dto/
-│       │   ├── LoginRequest.java
-│       │   ├── RegisterRequest.java
-│       │   ├── JwtResponse.java
-│       │   ├── FileUploadRequest.java
-│       │   ├── AccessGrantRequest.java
-│       │   ├── PaymentRequest.java
-│       │   └── FileResponse.java
-│       ├── security/
-│       │   ├── JwtProvider.java
-│       │   ├── CustomUserDetailsService.java
-│       │   └── JwtAuthenticationFilter.java
-│       └── exception/
-│           ├── GlobalExceptionHandler.java
-│           ├── ResourceNotFoundException.java
-│           └── UnauthorizedAccessException.java
-├── frontend/
-│   ├── package.json
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       └── App.jsx
-├── database/
-│   └── schema.sql
-└── README.md
+[ User / Guest ] ---> [ Public Discovery Chatbot UI ]
+                               |
+                               v
+                     POST /api/chat/public
+                               |
+            +------------------+------------------+
+            |                                     |
+            v                                     v
+  [ FileRepository DB Search ]          [ VectorStoreService RAG ]
+            |                                     |
+            +------------------+------------------+
+                               |
+                               v
+                  [ LlmService (Gemini API) ] ---> Grounded AI Reply + File Cards
+
+-----------------------------------------------------------------------------------
+
+[ Authenticated Admin ] ---> [ Admin AI Analytics Assistant UI ]
+                                    |
+                                    v
+                         POST /api/chat/admin  (Server RBAC check)
+                                    |
+            +-----------------------+-----------------------+
+            |                       |                       |
+            v                       v                       v
+[ DB Aggregations & Trends ] [ Recharts ChartData ] [ Admin VectorStore RAG ]
+            |                       |                       |
+            +-----------------------+-----------------------+
+                                    |
+                                    v
+                       [ LlmService (Gemini API) ] ---> AI Insights + Interactive Charts
 ```
 
 ---
 
-## Database Setup
+## Environment Variables Configuration
 
-### 1. Create Database and Tables
+Create a `.env` file or export environment variables:
 
-```bash
-# Open MySQL command line
-mysql -u root -p
+| Variable Name | Description | Example / Default |
+|---|---|---|
+| `GEMINI_API_KEY` | Gemini API Key for LLM responses | `AIzaSy...` |
+| `GEMINI_MODEL` | Gemini LLM Model Name | `gemini-1.5-flash` |
+| `SPRING_DATASOURCE_URL` | DB Connection URL | `jdbc:h2:file:./data/filevault_db` |
+| `SPRING_DATASOURCE_USERNAME` | DB Username | `sa` |
+| `SPRING_DATASOURCE_PASSWORD` | DB Password | `` |
+| `JWT_SECRET` | Secret key for signing JWT tokens | `your-secret-key-32-chars-minimum` |
+| `PORT` | Backend server port | `8080` |
 
-# Execute schema.sql
-source /path/to/database/schema.sql
-```
-
-### 2. Default Categories
-The following categories are automatically created:
-- Education
-- Story
-- Genres
-
----
-
-## Backend Setup
-
-### Prerequisites
-- JDK 17 or higher
-- MySQL 8.0 or higher
-- Maven 3.6 or higher
-
-### Installation Steps
-
-1. **Clone/Extract the project**
-```bash
-cd backend
-```
-
-2. **Update application.properties**
-```properties
-# backend/src/main/resources/application.properties
-spring.datasource.url=jdbc:mysql://localhost:3306/filevault_db
-spring.datasource.username=root
-spring.datasource.password=your_password
-
-# Update JWT secret (minimum 32 characters)
-jwt.secret=your-very-long-secret-key-change-this-in-production
-
-# Configure file upload directory (default: uploads inside backend)
-file.upload-dir=uploads
-```
-
-3. **Install Dependencies**
-```bash
-mvn clean install
-```
-
-4. **Build the Project**
-```bash
-mvn clean build
-```
-
-5. **Run the Application**
-```bash
-mvn spring-boot:run
-```
-
-The backend will start on `http://localhost:8080`
-If you run locally with the frontend dev server, the frontend uses port `3000` by default and proxies API requests to `http://localhost:8080`.
-
-Quick admin registration & login (useful for local testing):
-
-PowerShell example:
-
-```powershell
-# Register an admin
-Invoke-RestMethod -Uri http://localhost:8080/api/auth/admin/register -Method Post -ContentType 'application/json' -Body '{"email":"admin@example.com","password":"Password123!","firstName":"Admin","lastName":"User","phoneNumber":"1234567890"}'
-
-# Login as admin
-(Invoke-RestMethod -Uri http://localhost:8080/api/auth/admin/login -Method Post -ContentType 'application/json' -Body '{"email":"admin@example.com","password":"Password123!"}')
-```
-
-Notes:
-- Ensure `jwt.secret` is set to a secure random string in production (minimum 32 characters).
-- The application reads configuration from environment variables when present; see `application.properties` for defaults.
+*Note:* If `GEMINI_API_KEY` is omitted, the chatbots automatically operate in **Grounded Local RAG & Database Fallback Mode**, ensuring 100% feature availability without crashing.
 
 ---
 
 ## API Endpoints
 
-### Authentication
-```
-POST   /api/auth/admin/register      - Register admin account
-POST   /api/auth/admin/login         - Admin login
-POST   /api/auth/user/register       - Register user account
-POST   /api/auth/user/login          - User login
-```
+### AI & Analytics Endpoints
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/chat/public` | Process public discovery & RAG chatbot queries |
+| POST | `/api/chat/admin` | Process admin analytics & RAG assistant queries (Admin only) |
+| GET | `/api/analytics/overview` | Get overview analytics for authenticated admin |
+| GET | `/api/analytics/content-performance` | Get content performance metrics |
+| GET | `/api/analytics/time-series` | Get time-series chart data (`type=daily\|category\|30days`) |
+| GET | `/api/analytics/engagement` | Get engagement comparison & category stats |
 
-### Admin Endpoints
-```
-GET    /api/admin/profile/{adminId}          - Get admin profile
-PUT    /api/admin/profile/{adminId}          - Update admin profile
-GET    /api/admin/{adminId}/files            - Get admin's files
-GET    /api/admin/{adminId}/dashboard        - Get admin dashboard
-GET    /api/admin/{adminId}/earnings         - Get total earnings
-POST   /api/admin/{adminId}/access/grant     - Grant file access to user
-POST   /api/admin/{adminId}/access/revoke    - Revoke file access from user
-GET    /api/admin/{adminId}/file/{fileId}/access - Get file access information
-```
-
-### User Endpoints
-```
-GET    /api/user/profile/{userId}            - Get user profile
-PUT    /api/user/profile/{userId}            - Update user profile
-GET    /api/user/{userId}/files              - Get available files
-GET    /api/user/{userId}/dashboard          - Get user dashboard
-GET    /api/user/{userId}/wallet             - Get wallet balance
-POST   /api/user/{userId}/wallet/fund        - Fund wallet
-POST   /api/user/{userId}/payment/purchase/{fileId} - Purchase file
-GET    /api/user/{userId}/purchases          - Get user purchases
-GET    /api/user/{userId}/access             - Get user access information
-```
-
-### File Endpoints
-```
-POST   /api/files/upload                     - Upload file (Admin only)
-GET    /api/files/{fileId}                   - Get file details
-GET    /api/files/public                     - Get all public files
-GET    /api/files/category/{categoryId}      - Get files by category
-DELETE /api/files/{fileId}                   - Delete file (Admin only)
-GET    /api/files/download/{fileId}          - Download file
-```
+### File Engagement Endpoints
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/files/{id}/view-event` | Record file view event and increment counter |
+| POST | `/api/files/{id}/like` | Toggle file like (User required) |
+| GET | `/api/files/{id}/like/status` | Check if user liked file + get total likes |
+| POST | `/api/admin/{adminId}/subscribe` | Toggle subscription to admin (User required) |
+| GET | `/api/admin/{adminId}/subscribe/status` | Check subscription status + subscriber count |
 
 ---
 
-## Sample API Requests
+## Setup & Running Locally
 
-### Admin Registration
+### Backend
+1. Navigate to `backend`:
+   ```bash
+   cd backend
+   ```
+2. Run unit and integration tests:
+   ```bash
+   mvn test
+   ```
+3. Run Spring Boot dev server:
+   ```bash
+   mvn spring-boot:run
+   ```
+   Backend listens at `http://localhost:8080`.
+
+### Frontend
+1. Navigate to `frontend`:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run React dev server:
+   ```bash
+   npm start
+   ```
+   Frontend runs at `http://localhost:3000`.
+
+---
+
+## Production Deployment Guide
+
+### Deploying Frontend to Vercel
+1. Push frontend code to GitHub.
+2. Import project into Vercel dashboard with Root Directory set to `frontend`.
+3. Set environment variable `REACT_APP_API_BASE_URL` to your deployed Render backend URL (e.g. `https://filevault-api.onrender.com`).
+4. Build command: `npm run build`, Output directory: `build`.
+
+### Deploying Backend to Render
+1. Create a Web Service on Render pointing to `backend`.
+2. Environment: `Docker` (using root/backend Dockerfile) or `Java`.
+3. Configure Environment Variables on Render:
+   - `GEMINI_API_KEY`
+   - `SPRING_DATASOURCE_URL` (e.g. PostgreSQL or MySQL URL)
+   - `SPRING_DATASOURCE_USERNAME`
+   - `SPRING_DATASOURCE_PASSWORD`
+   - `JWT_SECRET`
+4. Deploy service and verify CORS headers match your Vercel origin.
+
+---
+
+## Automated Test Verification
+
+Run Maven test suite to verify all backend services:
 ```bash
-curl -X POST http://localhost:8080/api/auth/admin/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@example.com",
-    "password": "password123",
-    "firstName": "John",
-    "lastName": "Doe",
-    "phoneNumber": "+1234567890"
-  }'
+cd backend
+mvn test
 ```
-
-### User Registration
-```bash
-curl -X POST http://localhost:8080/api/auth/user/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123",
-    "firstName": "Jane",
-    "lastName": "Smith"
-  }'
-```
-
-### File Upload
-```bash
-curl -X POST http://localhost:8080/api/files/upload \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -F "file=@/path/to/file.pdf" \
-  -F "categoryId=1" \
-  -F "accessType=RESTRICTED" \
-  -F "price=9.99" \
-  -F "description=Premium Content"
-```
-
----
-
-## Frontend Setup
-
-### Prerequisites
-- Node.js 14+
-- npm or yarn
-
-### Installation Steps
-
-1. **Navigate to frontend directory**
-```bash
-cd frontend
-npm install
-```
-
-2. **Configure API Base URL**
-- Create `.env` file in frontend root:
-```
-REACT_APP_API_URL=http://localhost:8080/api
-```
-
-3. **Run Development Server**
-```bash
-npm start
-```
-
-Frontend will start on `http://localhost:3000`
-
----
-
-## Key Database Entities
-
-### Admin (Content Creators)
-- Email & Password authentication
-- Profile information
-- Can upload files
-- Can grant/revoke access
-- Earns from file sales
-
-### User (Viewers)
-- Email authentication
-- Profile information
-- Can browse files
-- Can purchase access
-- Wallet for payments
-- Access history
-
-### File
-- Metadata storage
-- Access type control
-- Category assignment
-- Pricing for restricted content
-
-### AccessControl
-- Tracks file access permissions
-- Two types: SHARED_BY_ADMIN, PURCHASED
-- Can be revoked by admin
-
-### Payment
-- Transaction history
-- Track earnings
-- Support multiple statuses
-
----
-
-## Security Features
-
-1. **JWT Authentication**: Stateless token-based authentication
-2. **Password Encryption**: BCrypt password hashing
-3. **Role-Based Access**: ADMIN and USER roles
-4. **CORS Configuration**: Restricted cross-origin requests
-5. **Exception Handling**: Centralized error management
-6. **Input Validation**: DTO-based request validation
-
----
-
-## File Upload Configuration
-
-### Upload Directory Structure
-```
-D:/filevault-uploads/
-├── admin_1/
-│   ├── 1234567890_abc123.pdf
-│   ├── 1234567891_def456.docx
-│   └── ...
-├── admin_2/
-│   └── ...
-```
-
-### Supported Features
-- Multiple file format support
-- File size validation (configurable)
-- Unique filename generation
-- Organized by admin ID
-
----
-
-## Troubleshooting
-
-### Database Connection Issues
-```
-Check MySQL is running:
-- Windows: Services > MySQL
-- Linux: sudo service mysql status
-- macOS: brew services list
-```
-
-### JWT Token Expiration
-- Default expiration: 24 hours
-- Configure in `application.properties`: `jwt.expiration=86400000`
-
-### File Upload Failures
-- Ensure upload directory exists and has write permissions
-- Check file size limits in `application.properties`
-- Verify MIME type support
-
-### CORS Issues
-- Check CorsConfig.java for allowed origins
-- Default: all origins allowed (change in production)
-
----
-
-## Future Enhancements
-
-1. **Payment Gateway Integration** (Stripe, PayPal)
-2. **Video Streaming Support**
-3. **Advanced Analytics Dashboard**
-4. **File Encryption**
-5. **User Comments/Reviews**
-6. **Subscription Model**
-7. **Admin Analytics**
-8. **Mobile App**
-9. **CDN Integration** for faster downloads
-10. **Cloud Storage Support** (AWS S3, Azure Blob)
-
----
-
-## Environment Variables
-
-```properties
-# Database
-spring.datasource.url=jdbc:mysql://localhost:3306/filevault_db
-spring.datasource.username=root
-spring.datasource.password=password
-
-# JWT
-jwt.secret=your-secure-secret-key-minimum-32-chars
-jwt.expiration=86400000
-
-# File Upload
-file.upload-dir=D:/filevault-uploads
-spring.servlet.multipart.max-file-size=100MB
-spring.servlet.multipart.max-request-size=100MB
-
-# Server
-server.port=8080
-
-# Logging
-logging.level.root=INFO
-logging.level.com.filevault=DEBUG
-```
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
----
-
-## Support
-
-For support, email support@filevault.com or create an issue on GitHub.
-
----
-
-## Authors
-
-- **Development Team**: FileVault Team
-- **Last Updated**: February 2026
-
----
-
-## Additional Notes
-
-- Always change JWT secret in production
-- Configure upload directory with adequate storage
-- Set up regular database backups
-- Implement rate limiting for production
-- Use HTTPS in production
-- Configure environment-specific properties
-- Monitor file storage usage
-- Implement logging and monitoring
-
-- PR: remove debug panel & add JWT logging
+**Results**: 12/12 tests pass cleanly (Auth, Files, PasswordReset, VectorStore, Public Chatbot, Admin Analytics Chatbot).

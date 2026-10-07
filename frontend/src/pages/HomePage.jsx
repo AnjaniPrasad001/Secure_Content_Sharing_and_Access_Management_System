@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FileViewer from '../components/FileViewer/FileViewer';
+import PublicChatbot from '../components/Chat/PublicChatbot';
 
 const HomePage = () => {
   const [files, setFiles] = useState([]);
@@ -285,6 +286,9 @@ const HomePage = () => {
           </div>
         </div>
       )}
+
+      {/* RAG & Search Public Chatbot */}
+      <PublicChatbot onSelectFile={handleViewFile} />
     </div>
   );
 };

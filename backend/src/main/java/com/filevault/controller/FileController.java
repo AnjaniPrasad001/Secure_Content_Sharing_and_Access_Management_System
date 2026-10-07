@@ -140,8 +140,12 @@ public class FileController {
     @DeleteMapping("/{fileId}")
     public ResponseEntity<?> deleteFile(@PathVariable Long fileId) {
         try {
-            Long adminId = 1L; // Extract from authentication
-            fileService.deleteFile(fileId, adminId);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String adminEmail = auth.getName();
+            Admin admin = adminRepository.findByEmail(adminEmail)
+                    .orElseThrow(() -> new Exception("Admin not found: " + adminEmail));
+            
+            fileService.deleteFile(fileId, admin.getId());
             
             Map<String, String> response = new HashMap<>();
             response.put("message", "File deleted successfully");
@@ -166,7 +170,12 @@ public class FileController {
             @PathVariable Long fileId,
             @RequestBody Map<String, Object> updates) {
         try {
-            File updatedFile = fileService.updateFile(fileId, updates);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String adminEmail = auth.getName();
+            Admin admin = adminRepository.findByEmail(adminEmail)
+                    .orElseThrow(() -> new Exception("Admin not found: " + adminEmail));
+
+            File updatedFile = fileService.updateFile(fileId, admin.getId(), updates);
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "File updated successfully");

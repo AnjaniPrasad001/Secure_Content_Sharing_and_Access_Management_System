@@ -6,6 +6,7 @@ import api from '../../api/axiosConfig';
 import FileUpload from '../FileUpload';
 import RequestManagement from '../RequestManagement';
 import FileEditor from '../FileEditor';
+import AdminChatbot from '../Chat/AdminChatbot';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
@@ -223,6 +224,16 @@ const AdminDashboard = () => {
               >
                 Access Requests
               </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-6 py-4 font-semibold flex items-center space-x-2 ${
+                  activeTab === 'analytics'
+                    ? 'border-b-2 border-indigo-600 text-indigo-600'
+                    : 'text-gray-600 hover:text-indigo-600'
+                }`}
+              >
+                <span>✨ AI Analytics & Assistant</span>
+              </button>
             </div>
           </div>
 
@@ -282,6 +293,13 @@ const AdminDashboard = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Access Requests</h2>
                 <RequestManagement adminId={admin} onRefresh={() => fetchDashboardData()} />
+              </div>
+            )}
+
+            {/* AI Analytics & Assistant Section */}
+            {activeTab === 'analytics' && (
+              <div>
+                <AdminChatbot />
               </div>
             )}
           </div>

@@ -54,6 +54,13 @@
             <version>8.0.33</version>
         </dependency>
 
+        <!-- H2 for local development fallback -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- JWT Token -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -71,13 +78,6 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.3</version>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- Twilio SMS -->
-        <dependency>
-            <groupId>com.twilio.sdk</groupId>
-            <artifactId>twilio</artifactId>
-            <version>9.2.0</version>
         </dependency>
 
         <!-- Lombok -->

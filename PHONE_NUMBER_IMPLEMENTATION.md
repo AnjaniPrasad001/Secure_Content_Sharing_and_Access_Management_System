@@ -427,7 +427,7 @@ if (response.phoneNumberWarning) {
 3. **Biometric Login:** Support phone-based biometric authentication
 4. **2FA:** Two-factor authentication using phone number
 5. **SMS Notifications:** Use phone number for important notifications
-6. **Twilio Integration:** Production SMS sending
+6. **Notification Provider:** Production-ready delivery integration
 
 ## Rollback Plan
 

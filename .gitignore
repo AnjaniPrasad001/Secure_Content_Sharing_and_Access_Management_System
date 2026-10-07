@@ -59,3 +59,16 @@ tmp/
 # Package files
 .m2/
 .gradle/
+
+
+# Runtime database files
+/backend/data/
+
+# User uploaded files
+/backend/uploads/
+
+# Environment files
+.env
+.env.*
+!.env.example
+

@@ -98,7 +98,8 @@ public class AdminService {
     }
     
     public Double getTotalEarnings(Long adminId) {
-        return paymentRepository.getTotalEarningsByAdmin(adminId);
+        Double earnings = paymentRepository.getTotalEarningsByAdmin(adminId);
+        return earnings != null ? earnings : 0.0;
     }
     
     public Long getTotalFilesUploaded(Long adminId) {

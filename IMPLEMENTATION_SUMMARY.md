@@ -259,7 +259,7 @@ PUT    /api/user/profile/{userId}           - Phone validation added
 ## 🔍 Known Limitations
 
 1. **OTP Storage:** Currently in-memory (can be upgraded to Redis/Database)
-2. **SMS Provider:** OTP logging for development (Twilio integration ready)
+2. **OTP Delivery:** OTP logging for development
 3. **Phone Formats:** International formats with +country code recommended
 
 ## 💡 Future Enhancements
@@ -268,7 +268,7 @@ PUT    /api/user/profile/{userId}           - Phone validation added
 - [ ] Email OTP as alternative
 - [ ] Two-factor authentication (2FA)
 - [ ] SMS notifications for important events
-- [ ] Twilio SMS provider integration
+- [ ] Pluggable notification provider integration
 - [ ] Biometric login support
 - [ ] Account recovery options
 
